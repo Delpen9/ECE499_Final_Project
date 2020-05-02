@@ -13,6 +13,7 @@ C:/Users/itdov/Documents/School/Spring_2020/Robotics&EmbeddedSystems/tirslk_max_
 ../Lab06_GPIOmain.c \
 C:/Users/itdov/Documents/School/Spring_2020/Robotics&EmbeddedSystems/tirslk_max_1_00_00/tirslk_max_1_00_00/inc/Reflectance.c \
 C:/Users/itdov/Documents/School/Spring_2020/Robotics&EmbeddedSystems/tirslk_max_1_00_00/tirslk_max_1_00_00/inc/TExaS.c \
+../move_motors.c \
 ../startup_msp432p401r_ccs.c \
 ../system_msp432p401r.c 
 
@@ -21,6 +22,7 @@ C_DEPS += \
 ./Lab06_GPIOmain.d \
 ./Reflectance.d \
 ./TExaS.d \
+./move_motors.d \
 ./startup_msp432p401r_ccs.d \
 ./system_msp432p401r.d 
 
@@ -29,6 +31,7 @@ OBJS += \
 ./Lab06_GPIOmain.obj \
 ./Reflectance.obj \
 ./TExaS.obj \
+./move_motors.obj \
 ./startup_msp432p401r_ccs.obj \
 ./system_msp432p401r.obj 
 
@@ -37,6 +40,7 @@ OBJS__QUOTED += \
 "Lab06_GPIOmain.obj" \
 "Reflectance.obj" \
 "TExaS.obj" \
+"move_motors.obj" \
 "startup_msp432p401r_ccs.obj" \
 "system_msp432p401r.obj" 
 
@@ -45,6 +49,7 @@ C_DEPS__QUOTED += \
 "Lab06_GPIOmain.d" \
 "Reflectance.d" \
 "TExaS.d" \
+"move_motors.d" \
 "startup_msp432p401r_ccs.d" \
 "system_msp432p401r.d" 
 
@@ -53,6 +58,7 @@ C_SRCS__QUOTED += \
 "../Lab06_GPIOmain.c" \
 "C:/Users/itdov/Documents/School/Spring_2020/Robotics&EmbeddedSystems/tirslk_max_1_00_00/tirslk_max_1_00_00/inc/Reflectance.c" \
 "C:/Users/itdov/Documents/School/Spring_2020/Robotics&EmbeddedSystems/tirslk_max_1_00_00/tirslk_max_1_00_00/inc/TExaS.c" \
+"../move_motors.c" \
 "../startup_msp432p401r_ccs.c" \
 "../system_msp432p401r.c" 
 

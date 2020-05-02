@@ -71,6 +71,7 @@ int Program6_1(void){
 
 
 int32_t Position; // 332 is right, and -332 is left of center
+/*
 int main(void){
   Clock_Init48MHz();
   Reflectance_Init();
@@ -80,6 +81,42 @@ int main(void){
     Position = Reflectance_Position(Data);
     Clock_Delay1ms(10);
   }
+}
+*/
+
+int main(void){
+    Clock_Init48MHz();
+    Reflectance_Init();
+    TExaS_Init(LOGICANALYZER_P7);
+    Clock_Init48MHz();
+    LaunchPad_Init();   // built-in switches and LEDs
+    Bump_Init();        // bump switches
+    Motor_InitSimple(); // initialization
+    SysTick_Init();
+
+    uint8_t scale = 1;
+    uint8_t duty = 1*scale;
+    uint8_t period = 10000*scale;
+    uint8_t time = 10000*scale;
+
+    while(1){
+    Data = Reflectance_Read(1000);
+    Position = Reflectance_Position(Data);
+    if(Position>30 && Position<300){
+        Motor_LeftSimple(duty, period, time);
+        Clock_Delay1ms(10);
+    }else if (Position<-30){
+        Motor_RightSimple(duty, period, time);
+        Clock_Delay1ms(10);
+    }else if (Position<30 && Position>-30){
+        Motor_StopSimple();
+    }
+    else{
+        Motor_ForwardSimple(duty, period, time);
+        Clock_Delay1ms(10);
+    }
+    Clock_Delay1ms(10);
+    }
 }
 
 int main2(void){ // main2(void){

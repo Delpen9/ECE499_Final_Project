@@ -14,6 +14,7 @@ ORDERED_OBJS += \
 "./Lab06_GPIOmain.obj" \
 "./Reflectance.obj" \
 "./TExaS.obj" \
+"./move_motors.obj" \
 "./startup_msp432p401r_ccs.obj" \
 "./system_msp432p401r.obj" \
 "../msp432p401r.cmd" \
@@ -159,8 +160,8 @@ Lab06_GPIO.hex: $(EXE_OUTPUTS)
 # Other Targets
 clean:
 	-$(RM) $(BIN_OUTPUTS__QUOTED)$(EXE_OUTPUTS__QUOTED)
-	-$(RM) "Clock.obj" "Lab06_GPIOmain.obj" "Reflectance.obj" "TExaS.obj" "startup_msp432p401r_ccs.obj" "system_msp432p401r.obj" 
-	-$(RM) "Clock.d" "Lab06_GPIOmain.d" "Reflectance.d" "TExaS.d" "startup_msp432p401r_ccs.d" "system_msp432p401r.d" 
+	-$(RM) "Clock.obj" "Lab06_GPIOmain.obj" "Reflectance.obj" "TExaS.obj" "move_motors.obj" "startup_msp432p401r_ccs.obj" "system_msp432p401r.obj" 
+	-$(RM) "Clock.d" "Lab06_GPIOmain.d" "Reflectance.d" "TExaS.d" "move_motors.d" "startup_msp432p401r_ccs.d" "system_msp432p401r.d" 
 	-@echo 'Finished clean'
 	-@echo ' '
 
