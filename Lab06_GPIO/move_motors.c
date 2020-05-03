@@ -12,6 +12,9 @@ void Motor_RightSimple(uint16_t duty, uint32_t period, uint32_t time);
 void Clock_Delay1ms(uint32_t n);
 void SysTick_Wait10ms(uint32_t delay);
 uint8_t Bump_Read(void);
+uint8_t Bump_Read_Right(void);
+uint8_t Bump_Read_Left(void);
+
 
 /*************************************
  *  Launchpad init
@@ -75,14 +78,14 @@ void Motor_ForwardSimple(uint16_t duty, uint32_t period, uint32_t time){
             time  -= period;
             P2->OUT |= 0xC0;//EN
             SysTick_Wait10ms(duty);
-            if(Bump_Read() != 0xFF){
+            if(Bump_Read() == 1){
                 P2->OUT &= ~0xC0;
                 Motor_StopSimple();
                 return;
             }
             P2->OUT &= ~0xC0;
             SysTick_Wait10ms(duty1);
-            if(Bump_Read() != 0xFF){
+            if(Bump_Read() == 1){
                 P2->OUT &= ~0xC0;
                 Motor_StopSimple();
                 return;
@@ -105,14 +108,14 @@ void Motor_BackwardSimple(uint16_t duty, uint32_t period, uint32_t time){
             time  -= period;
             P2->OUT |= 0xC0;//EN
             SysTick_Wait10ms(duty);
-            if(Bump_Read() != 0xFF){
+            if(Bump_Read() == 1){
                 P2->OUT &= ~0xC0;
                 Motor_StopSimple();
                 return;
             }
             P2->OUT &= ~0xC0;
             SysTick_Wait10ms(duty1);
-            if(Bump_Read() != 0xFF){
+            if(Bump_Read() == 1){
                 P2->OUT &= ~0xC0;
                 Motor_StopSimple();
                 return;
@@ -135,14 +138,14 @@ void Motor_LeftSimple(uint16_t duty, uint32_t period, uint32_t time){
             time  -= period;
             P2->OUT |= 0x80;//EN
             SysTick_Wait10ms(duty);
-            if(Bump_Read() != 0xFF){
+            if(Bump_Read() == 1){
                 P2->OUT &= ~0x80;
                 Motor_StopSimple();
                 return;
             }
             P2->OUT &= ~0x80;
             SysTick_Wait10ms(duty1);
-            if(Bump_Read() != 0xFF){
+            if(Bump_Read() == 1){
                 P2->OUT &= ~0x80;
                 Motor_StopSimple();
                 return;
@@ -165,14 +168,14 @@ void Motor_RightSimple(uint16_t duty, uint32_t period, uint32_t time){
         time  -= period;
         P2->OUT |= 0x40;//EN
         SysTick_Wait10ms(duty);
-        if(Bump_Read() != 0xFF){
+        if(Bump_Read() == 1){
             P2->OUT &= ~0x40;
             Motor_StopSimple();
             return;
         }
         P2->OUT &= ~0x40;
         SysTick_Wait10ms(duty1);
-        if(Bump_Read() != 0xFF){
+        if(Bump_Read() == 1){
             P2->OUT &= ~0x40;
             Motor_StopSimple();
             return;
@@ -232,184 +235,36 @@ void Bump_Init(void){
 // bit 2 Bump1
 // bit 0 Bump0
 uint8_t Bump_Read(void){
-    uint8_t value = P4->IN;
-    return value|0x12;
+    uint8_t value = P4->IN|0x12;
+    printf("You entered: %d", value); // Bumper: 50, No Bumper: 127
+    if (value == 127){
+        return 1;
+    }
+    return 0;
 }
 
 uint8_t Bump_Read_Right(void){ /*Works*/
-    uint8_t value = P4->IN;
-    printf("You entered: %d", value); // no bumper: 111; bumper: 103, no idea: 127
-    return value|0xF2;
+    uint8_t value = P4->IN|0xF2;
+    printf("You entered: %d", value); // Bumper: 242, 254, 251, No Bumper: 255
+    if (value == 255){
+        return 1;
+    }
+    return 0;
 }
 
 uint8_t Bump_Read_Left(void){
-    uint8_t value = P4->IN;
-    return value|0x1F;
+    uint8_t value = P4->IN|0x1F;
+    printf("You entered: %d", value); // Bumper: 95, 31, No Bumper: 127
+    if (value == 127){
+        return 1;
+    }
+    return 0;
 }
 
 /***************************
  * main.c
  ***************************/
 
-
-/****************************************
- * CLOCK Init
- ***************************************/
-/*
-uint32_t ClockFrequency = 3000000; // cycles/second
-
-int32_t Prewait = 0;                   // loops between BSP_Clock_InitFastest() called and PCM idle (expect 0)
-uint32_t CPMwait = 0;                   // loops between Power Active Mode Request and Current Power Mode matching requested mode (expect small)
-uint32_t Postwait = 0;                  // loops between Current Power Mode matching requested mode and PCM module idle (expect about 0)
-uint32_t IFlags = 0;                    // non-zero if transition is invalid
-uint32_t Crystalstable = 0;             // loops before the crystal stabilizes (expect small)
-
-void Clock_Init32KHz(void){
-  // wait for the PCMCTL0 and Clock System to be write-able by waiting for Power Control Manager to be idle
-  while(PCM->CTL1&0x00000100){
-//  while(PCMCTL1&0x00000100){
-    Prewait = Prewait + 1;
-    if(Prewait >= 100000){
-      return;                           // time out error
-    }
-  }
-  // request power active mode LDO VCORE1 to support the 48 MHz frequency
-  PCM->CTL0 = (PCM->CTL0&~0xFFFF000F) |     // clear PCMKEY bit field and AMR bit field
-//  PCMCTL0 = (PCMCTL0&~0xFFFF000F) |     // clear PCMKEY bit field and AMR bit field
-            0x695A0000 |                // write the proper PCM key to unlock write access
-            0x00000001;                 // request power active mode LDO VCORE1
-  // check if the transition is invalid (see Figure 7-3 on p344 of datasheet)
-  if(PCM->IFG&0x00000004){
-    IFlags = PCM->IFG;                    // bit 2 set on active mode transition invalid; bits 1-0 are for LPM-related errors; bit 6 is for DC-DC-related error
-    PCM->CLRIFG = 0x00000004;             // clear the transition invalid flag
-    // to do: look at CPM bit field in PCMCTL0, figure out what mode you're in, and step through the chart to transition to the mode you want
-    // or be lazy and do nothing; this should work out of reset at least, but it WILL NOT work if Clock_Int32kHz() or Clock_InitLowPower() has been called
-    return;
-  }
-  // wait for the CPM (Current Power Mode) bit field to reflect a change to active mode LDO VCORE1
-  while((PCM->CTL0&0x00003F00) != 0x00000100){
-    CPMwait = CPMwait + 1;
-    if(CPMwait >= 500000){
-      return;                           // time out error
-    }
-  }
-  // wait for the PCMCTL0 and Clock System to be write-able by waiting for Power Control Manager to be idle
-  while(PCM->CTL1&0x00000100){
-    Postwait = Postwait + 1;
-    if(Postwait >= 100000){
-      return;                           // time out error
-    }
-  }
-  // initialize PJ.3 and PJ.2 and make them HFXT (PJ.3 built-in 48 MHz crystal out; PJ.2 built-in 48 MHz crystal in)
-  PJ->SEL0 |= 0x03;        // 0000 0011
-  PJ->SEL1 &= ~0x03;   // 1111 1100  configure built-in 32 kHz crystal for LFXT
-
-  CS->KEY = 0x695A;            // unlock CS module for register access
-  CS->CTL2 = (CS->CTL2 &~0x00000003)|0x00000003|0x00000100;
-  CS->CTL2 &= ~0x00000200;     //disable low-frequency crystal bypass
-
-  // wait for LXFT clock to stabilize
-  while(CS->IFG&0x00000001){
-     CS->CLRIFG = 0x00000001;       // clear the LFXT interrupt flag
-     Crystalstable=Crystalstable+1;
-    if(Crystalstable > 100000)
-      return ;            // time out error
-  }
-  CS->CTL1 = 0x10000200;       // SMCLK/2 HSMCLK MCLK from LXFT
-  CS->KEY = 0;         // lock CS module                         // lock CS module from unintended access
-  ClockFrequency = 48000000;
-//  SubsystemFrequency = 12000000;
-}
-
-
-void Clock_Init48MHz(void){
-  // wait for the PCMCTL0 and Clock System to be write-able by waiting for Power Control Manager to be idle
-  while(PCM->CTL1&0x00000100){
-//  while(PCMCTL1&0x00000100){
-    Prewait = Prewait + 1;
-    if(Prewait >= 100000){
-      return;                           // time out error
-    }
-  }
-  // request power active mode LDO VCORE1 to support the 48 MHz frequency
-  PCM->CTL0 = (PCM->CTL0&~0xFFFF000F) |     // clear PCMKEY bit field and AMR bit field
-//  PCMCTL0 = (PCMCTL0&~0xFFFF000F) |     // clear PCMKEY bit field and AMR bit field
-            0x695A0000 |                // write the proper PCM key to unlock write access
-            0x00000001;                 // request power active mode LDO VCORE1
-  // check if the transition is invalid (see Figure 7-3 on p344 of datasheet)
-  if(PCM->IFG&0x00000004){
-    IFlags = PCM->IFG;                    // bit 2 set on active mode transition invalid; bits 1-0 are for LPM-related errors; bit 6 is for DC-DC-related error
-    PCM->CLRIFG = 0x00000004;             // clear the transition invalid flag
-    // to do: look at CPM bit field in PCMCTL0, figure out what mode you're in, and step through the chart to transition to the mode you want
-    // or be lazy and do nothing; this should work out of reset at least, but it WILL NOT work if Clock_Int32kHz() or Clock_InitLowPower() has been called
-    return;
-  }
-  // wait for the CPM (Current Power Mode) bit field to reflect a change to active mode LDO VCORE1
-  while((PCM->CTL0&0x00003F00) != 0x00000100){
-    CPMwait = CPMwait + 1;
-    if(CPMwait >= 500000){
-      return;                           // time out error
-    }
-  }
-  // wait for the PCMCTL0 and Clock System to be write-able by waiting for Power Control Manager to be idle
-  while(PCM->CTL1&0x00000100){
-    Postwait = Postwait + 1;
-    if(Postwait >= 100000){
-      return;                           // time out error
-    }
-  }
-  // initialize PJ.3 and PJ.2 and make them HFXT (PJ.3 built-in 48 MHz crystal out; PJ.2 built-in 48 MHz crystal in)
-  PJ->SEL0 |= 0x0C;
-  PJ->SEL1 &= ~0x0C;                    // configure built-in 48 MHz crystal for HFXT operation
-  CS->KEY = 0x695A;                     // unlock CS module for register access
-  CS->CTL2 = (CS->CTL2&~0x00700000) |   // clear HFXTFREQ bit field
-           0x00600000 |                 // configure for 48 MHz external crystal
-           0x00010000 |                 // HFXT oscillator drive selection for crystals >4 MHz
-           0x01000000;                  // enable HFXT
-  CS->CTL2 &= ~0x02000000;              // disable high-frequency crystal bypass
-  // wait for the HFXT clock to stabilize
-  while(CS->IFG&0x00000002){
-    CS->CLRIFG = 0x00000002;              // clear the HFXT oscillator interrupt flag
-    Crystalstable = Crystalstable + 1;
-    if(Crystalstable > 100000){
-      return;                           // time out error
-    }
-  }
-  // configure for 2 wait states (minimum for 48 MHz operation) for flash Bank 0
-  FLCTL->BANK0_RDCTL = (FLCTL->BANK0_RDCTL&~0x0000F000)|FLCTL_BANK0_RDCTL_WAIT_2;
-  // configure for 2 wait states (minimum for 48 MHz operation) for flash Bank 1
-  FLCTL->BANK1_RDCTL = (FLCTL->BANK1_RDCTL&~0x0000F000)|FLCTL_BANK1_RDCTL_WAIT_2;
-  CS->CTL1 = 0x20000000 |               // configure for SMCLK divider /4
-           0x00100000 |                 // configure for HSMCLK divider /2
-           0x00000200 |                 // configure for ACLK sourced from REFOCLK
-           0x00000050 |                 // configure for SMCLK and HSMCLK sourced from HFXTCLK
-           0x00000005;                  // configure for MCLK sourced from HFXTCLK
-  CS->KEY = 0;                          // lock CS module from unintended access
-  ClockFrequency = 48000000;
-//  SubsystemFrequency = 12000000;
-}
-
-// delay function
-// which delays about 6*ulCount cycles
-// ulCount=8000 => 1ms = (8000 loops)*(6 cycles/loop)*(20.83 ns/cycle)
-  //Code Composer Studio Code
-void delay(unsigned long ulCount){
-  __asm (  "pdloop:  subs    r0, #1\n"
-      "    bne    pdloop\n");
-}
-
-
-// ------------Clock_Delay1ms------------
-// Simple delay function which delays about n milliseconds.
-// Inputs: n, number of msec to wait
-// Outputs: none
-void Clock_Delay1ms(uint32_t n){
-  while(n){
-    delay(ClockFrequency/9162);   // 1 msec, tuned at 48 MHz
-    n--;
-  }
-}
-*/
 
 /****************************************
  *  SysTick Timer Init
