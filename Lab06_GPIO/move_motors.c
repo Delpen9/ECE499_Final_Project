@@ -78,18 +78,22 @@ void Motor_ForwardSimple(uint16_t duty, uint32_t period, uint32_t time){
             time  -= period;
             P2->OUT |= 0xC0;//EN
             SysTick_Wait10ms(duty);
+            /*
             if(Bump_Read() == 1){
                 P2->OUT &= ~0xC0;
                 Motor_StopSimple();
                 return;
             }
+            */
             P2->OUT &= ~0xC0;
             SysTick_Wait10ms(duty1);
+            /*
             if(Bump_Read() == 1){
                 P2->OUT &= ~0xC0;
                 Motor_StopSimple();
                 return;
             }
+            */
         }while( (time > 0) );
         Motor_StopSimple();
         SysTick_Wait10ms(time);
@@ -108,18 +112,22 @@ void Motor_BackwardSimple(uint16_t duty, uint32_t period, uint32_t time){
             time  -= period;
             P2->OUT |= 0xC0;//EN
             SysTick_Wait10ms(duty);
+            /*
             if(Bump_Read() == 1){
                 P2->OUT &= ~0xC0;
                 Motor_StopSimple();
                 return;
             }
+            */
             P2->OUT &= ~0xC0;
             SysTick_Wait10ms(duty1);
+            /*
             if(Bump_Read() == 1){
                 P2->OUT &= ~0xC0;
                 Motor_StopSimple();
                 return;
             }
+            */
         }while( (time > 0) );
         Motor_StopSimple();
         SysTick_Wait10ms(time);
@@ -138,18 +146,22 @@ void Motor_LeftSimple(uint16_t duty, uint32_t period, uint32_t time){
             time  -= period;
             P2->OUT |= 0x80;//EN
             SysTick_Wait10ms(duty);
+            /*
             if(Bump_Read() == 1){
                 P2->OUT &= ~0x80;
                 Motor_StopSimple();
                 return;
             }
+            */
             P2->OUT &= ~0x80;
             SysTick_Wait10ms(duty1);
+            /*
             if(Bump_Read() == 1){
                 P2->OUT &= ~0x80;
                 Motor_StopSimple();
                 return;
             }
+            */
         }while( (time > 0) );
         Motor_StopSimple();
         SysTick_Wait10ms(time);
@@ -168,18 +180,22 @@ void Motor_RightSimple(uint16_t duty, uint32_t period, uint32_t time){
         time  -= period;
         P2->OUT |= 0x40;//EN
         SysTick_Wait10ms(duty);
+        /*
         if(Bump_Read() == 1){
             P2->OUT &= ~0x40;
             Motor_StopSimple();
             return;
         }
+        */
         P2->OUT &= ~0x40;
         SysTick_Wait10ms(duty1);
+        /*
         if(Bump_Read() == 1){
             P2->OUT &= ~0x40;
             Motor_StopSimple();
             return;
         }
+        */
     }while( (time > 0) );
     Motor_StopSimple();
     SysTick_Wait10ms(time);
@@ -236,29 +252,27 @@ void Bump_Init(void){
 // bit 0 Bump0
 uint8_t Bump_Read(void){
     uint8_t value = P4->IN|0x12;
-    printf("You entered: %d", value); // Bumper: 50, No Bumper: 127
-    if (value == 127){
-        return 1;
+    printf("Value is: %d\n", value);
+    if (value == 127 || value == 126){
+        return 0;
     }
-    return 0;
+    return 1;
 }
 
 uint8_t Bump_Read_Right(void){ /*Works*/
     uint8_t value = P4->IN|0xF2;
-    printf("You entered: %d", value); // Bumper: 242, 254, 251, No Bumper: 255
     if (value == 255){
-        return 1;
+        return 0;
     }
-    return 0;
+    return 1;
 }
 
 uint8_t Bump_Read_Left(void){
     uint8_t value = P4->IN|0x1F;
-    printf("You entered: %d", value); // Bumper: 95, 31, No Bumper: 127
     if (value == 127){
-        return 1;
+        return 0;
     }
-    return 0;
+    return 1;
 }
 
 /***************************
