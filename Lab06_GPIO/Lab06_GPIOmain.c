@@ -1,11 +1,3 @@
-// Lab06_GPIOmain.c
-// Runs on MSP432
-// Solution to GPIO lab
-// Daniel and Jonathan Valvano
-// April 15, 2019
-// Provide test main program for QTRX reflectance sensor array
-// Pololu part number 3672.
-
 /* This example accompanies the book
    "Embedded Systems: Introduction to Robotics,
    Jonathan W. Valvano, ISBN: 9781074544300, copyright (c) 2019
@@ -40,50 +32,13 @@ those of the authors and should not be interpreted as representing official
 policies, either expressed or implied, of the FreeBSD Project.
 */
 
-// reflectance even LED illuminate connected to P5.3
-// reflectance odd LED illuminate connected to P9.2
-// reflectance sensor 1 connected to P7.0 (robot's right, robot off road to left)
-// reflectance sensor 2 connected to P7.1
-// reflectance sensor 3 connected to P7.2
-// reflectance sensor 4 connected to P7.3 center
-// reflectance sensor 5 connected to P7.4 center
-// reflectance sensor 6 connected to P7.5
-// reflectance sensor 7 connected to P7.6
-// reflectance sensor 8 connected to P7.7 (robot's left, robot off road to right)
-
 #include <stdint.h>
 #include "msp.h"
 #include "..\inc\Reflectance.h"
 #include "..\inc\Clock.h"
 #include "..\inc\TExaS.h"
 
-uint8_t Data; // QTRX
-// Test main for section 6.4.3
-int Program6_1(void){
-  Clock_Init48MHz();
-  Reflectance_Init(); // your initialization
-  TExaS_Init(LOGICANALYZER_P7);
-  while(1){
-    Data = Reflectance_Read(1000); // your measurement
-    Clock_Delay1ms(10);
-  }
-}
-
-
-int32_t Position; // 332 is right, and -332 is left of center
 /*
-int main(void){
-  Clock_Init48MHz();
-  Reflectance_Init();
-  TExaS_Init(LOGICANALYZER_P7);
-  while(1){
-    Data = Reflectance_Read(1000);
-    Position = Reflectance_Position(Data);
-    Clock_Delay1ms(10);
-  }
-}
-*/
-
 int main(void){
     Clock_Init48MHz();
     Reflectance_Init();
@@ -100,67 +55,73 @@ int main(void){
     uint8_t time = 10000*scale;
 
     while(1){
-    Data = Reflectance_Read(1000);
-    Position = Reflectance_Position(Data);
-    if(Position>30 && Position<300){
-        Motor_LeftSimple(duty, period, time);
-        Clock_Delay1ms(10);
-    }else if (Position<-30){
-        Motor_RightSimple(duty, period, time);
-        Clock_Delay1ms(10);
-    }else if (Position<30 && Position>-30){
-        Motor_StopSimple();
+        Data = Reflectance_Read(1000);
+        Position = Reflectance_Position(Data);
+        if(Position>30 && Position<300){
+            Motor_LeftSimple(duty, period, time);
+            Clock_Delay1ms(100);
+        }else if (Position<-30){
+            Motor_RightSimple(duty, period, time);
+            Clock_Delay1ms(100);
+        }else if (Position<30 && Position>-30){
+            Motor_ForwardSimple(duty, period, time);
+            Clock_Delay1ms(100);
+        }
+        else{
+            Motor_StopSimple();
+            Clock_Delay1ms(100);
+        }
     }
-    else{
+}
+*/
+
+int main(void){
+    Clock_Init48MHz();
+    Reflectance_Init();
+    TExaS_Init(LOGICANALYZER_P7);
+    Clock_Init48MHz();
+    LaunchPad_Init();   // built-in switches and LEDs
+    Bump_Init();        // bump switches
+    Motor_InitSimple(); // initialization
+    SysTick_Init();
+
+    uint8_t scale = 5;
+    uint8_t duty = 5*scale;
+    uint8_t period = 10*scale;
+    uint8_t time = 10*scale;
+
+    while(1){
+        Motor_ForwardSimple(duty, period, time);
+        Clock_Delay1ms(1);
+        /*
         Motor_ForwardSimple(duty, period, time);
         Clock_Delay1ms(10);
+        if(Bump_Read_Left() == 1 && Bump_Read_Right() == 0){
+            Motor_StopSimple(duty, period, time);
+            Clock_Delay1ms(10);
+            Motor_BackwardSimple(duty, period, time);
+            Clock_Delay1ms(10);
+            Motor_LeftSimple(duty, period, time);
+            Clock_Delay1ms(10);
+        }
+        if(Bump_Read_Right() == 1 && Bump_Read_Left() == 0){
+            Motor_StopSimple(duty, period, time);
+            Clock_Delay1ms(10);
+            Motor_BackwardSimple(duty, period, time);
+            Clock_Delay1ms(10);
+            Motor_RightSimple(duty, period, time);
+            Clock_Delay1ms(10);
+        }
+         */
+        if (Bump_Read() == 1){
+            /*
+            Motor_StopSimple(duty, period, time);
+            Clock_Delay1ms(1000);
+            */
+            Motor_BackwardSimple(duty, period, time);
+            Clock_Delay1ms(1000);
+            Motor_RightSimple(duty, period, time);
+            Clock_Delay1ms(1000);
+        }
     }
-    Clock_Delay1ms(10);
-    }
-}
-
-int main2(void){ // main2(void){
-    int32_t i;
-  Clock_Init48MHz();
-  Reflectance_Init();
-  P4->SEL0 &= ~0x01;
-  P4->SEL1 &= ~0x01;    //  P4.0 as GPIO
-  P4->DIR |= 0x01;      //  make P4.0 out
-  TExaS_Init(LOGICANALYZER_P7);
-  while(1){
-    P5->OUT |= 0x08;      // turn on 4 even IR LEDs
-    P9->OUT |= 0x04;      // turn on 4 odd IR LEDs
-    P7->DIR = 0xFF;       // make P7.7-P7.0 out
-    P7->OUT = 0xFF;       // prime for measurement
-    Clock_Delay1us(10);   // wait 10 us
-    P7->DIR = 0x00;       // make P7.7-P7.0 in
-    for(i=0;i<10000;i++){
-      P4->OUT = P7->IN&0x01; // convert P7.0 input to digital
-    }
-    P5->OUT &= ~0x08;     // turn off 4 even IR LEDs
-    P9->OUT &= ~0x04;     // turn off 4 odd IR LEDs
-    Clock_Delay1ms(10);
-  }
-}
-
-int main3(void){ // main3
-    int32_t i;
-  Clock_Init48MHz();
-  Reflectance_Init();
-  P4->SEL0 &= ~0x01;
-  P4->SEL1 &= ~0x01;    //  P4.0 as GPIO
-  P4->DIR |= 0x01;      //  make P4.0 out
-  TExaS_Init(LOGICANALYZER_P7);
-  while(1){
-    P5->OUT |= 0x08;      // turn on 4 even IR LEDs
-    P7->DIR = 0xFF;       // make P7.7-P7.0 out
-    P7->OUT = 0xFF;       // prime for measurement
-    Clock_Delay1us(10);   // wait 10 us
-    P7->DIR = 0x00;       // make P7.7-P7.0 in
-    for(i=0;i<10000;i++){
-      P4->OUT = P7->IN&0x01; // convert P7.0 input to digital
-    }
-    P5->OUT &= ~0x08;     // turn off 4 even IR LEDs
-    Clock_Delay1ms(10);
-  }
 }
